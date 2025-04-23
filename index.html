@@ -202,7 +202,14 @@ postgres=# select interval '1 year 2 months 3 days 4 hours 5 minutes 6 seconds 7
  1 year 2 mons 3 days 04:05:06.007008
 (1 row)
 
+postgres=# select age(timestamp '2021-02-02 01:01:01', timestamp '2020-01-01 00:00:00');
+             age
+-----------------------------
+ 1 year 1 mon 1 day 01:01:01
+(1 row)
+
 postgres=#
+
 </pre>
         </p>
     </div>
@@ -266,7 +273,7 @@ postgres=#
             },
             {
                 question: "EXTRACT(TIMEZONE FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
-                options: ["Error", userTzOffset, "-17940", "-299"],
+                options: ["Error", userTzOffset, "0"],
                 explanation: "A <code>TIMESTAMP</code> does not carry any timezone information, so there is nothing to extract."
             },
             {
