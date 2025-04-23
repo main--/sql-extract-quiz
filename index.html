@@ -257,7 +257,7 @@ postgres=#
             {
                 question: "EXTRACT(MILLISECOND FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
                 options: ["53123.456", "123", "123.456", "1701283253123"],
-                explanation: "At this step we add the second inconsistency: milliseconds include the seconds, but nothing else."
+                explanation: "At this step we add the second inconsistency: milliseconds include seconds."
             },
             {
                 question: "EXTRACT(MICROSECOND FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
@@ -266,12 +266,12 @@ postgres=#
             },
             {
                 question: "EXTRACT(TIMEZONE FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
-                options: ["Error", userTzOffset, "-17940"],
+                options: ["Error", userTzOffset, "-17940", "-299"],
                 explanation: "A <code>TIMESTAMP</code> does not carry any timezone information, so there is nothing to extract."
             },
             {
                 question: "EXTRACT(TIMEZONE FROM TIMESTAMP WITH TIME ZONE '2023-11-29T18:40:53.123456-04:59')",
-                options: [userTzOffset, "Error", "-17940"],
+                options: [userTzOffset, "Error", "-17940", "-299"],
                 explanation: "Trick question. Contrary to what the name of the <code>TIMESTAMP WITH TIME ZONE</code> (aka <code>TIMESTAMPTZ</code>) type suggests, it does not actually contain any timezone information. The extracted timezone offset is always determined by the session timezone, which defaults to your local time."
             },
             {
@@ -282,7 +282,7 @@ postgres=#
             {
                 question: "INTERVAL '13 months 1 week 35 days 26 hours 77 minutes'",
                 options: ["1 year 1 mon 42 days 27:17:00", "Error", "13 months 1 week 35 days 26 hours 77 minutes", "1 year 2 mons 13 days 03:17:00"],
-                explanation: "Intervals are internally represented as hours, days, and months. This leads to the weird behavior where months are converted into years, days into weeks, and minutes into hours, but nothing else. Postgres provides a <code>justify_interval</code> function to remedy this, which outputs <code>1 year 2 mons 13 days 03:17:00</code> based on the assumption that every day has 24 hours and (quite surprisingly) that every month has 30 days."
+                explanation: "Intervals are internally represented as hours, days, and months. This leads to the weird behavior where months are converted into years, weeks into days, and minutes into hours, but nothing else. Postgres provides a <code>justify_interval</code> function to remedy this, which outputs <code>1 year 2 mons 13 days 03:17:00</code> based on the assumption that every day has 24 hours and (quite surprisingly) that every month has 30 days."
             },
             {
                 question: "EXTRACT(MONTHS FROM TIMESTAMP '2023-11-01' - TIMESTAMP '2017-01-01')",
@@ -297,7 +297,7 @@ postgres=#
             {
                 question: "EXTRACT(MONTHS FROM age(TIMESTAMP '2023-11-01', TIMESTAMP '2017-01-01'))",
                 options: ["10", "0", "11", "82"],
-                explanation: "The best solution is to use the <code>age</code> function instead of the subtraction operator in this case."
+                explanation: "The <code>age</code> function actually subtracts the months, as one would intuit."
             },
         ];
 
