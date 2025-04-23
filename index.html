@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL EXTRACT Function Quiz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #326690;
+            border-bottom: 2px solid #326690;
+            padding-bottom: 10px;
+        }
+        .intro {
+            background-color: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        .quiz-container {
+            margin-bottom: 40px;
+        }
+        .question {
+            background-color: #f9f9f9;
+            border-left: 4px solid #326690;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 5px 5px 0;
+        }
+        .question h3 {
+            margin-top: 0;
+            color: #326690;
+        }
+        .options {
+            list-style-type: none;
+            padding: 0;
+        }
+        .option {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .option:hover {
+            background-color: #f0f0f0;
+        }
+        .option.selected {
+            background-color: #e6f7ff;
+            border-color: #91d5ff;
+        }
+        .option.correct {
+            background-color: #f6ffed;
+            border-color: #b7eb8f;
+        }
+        .option.incorrect {
+            background-color: #fff2f0;
+            border-color: #ffccc7;
+        }
+        .feedback {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .feedback.correct {
+            background-color: #f6ffed;
+            border: 1px solid #b7eb8f;
+        }
+        .feedback.incorrect {
+            background-color: #fff2f0;
+            border: 1px solid #ffccc7;
+        }
+        .result-container {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            display: none;
+        }
+        .result-container h2 {
+            color: #326690;
+        }
+        pre, code {
+            background-color: #f5f5f5;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 2px 4px;
+        }
+        pre {
+            padding: 10px;
+            overflow-x: auto;
+        }
+        .progress-bar {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        .progress {
+            height: 10px;
+            background-color: #326690;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .score-display {
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .github-link {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 14px;
+        }
+        .github-link a {
+            color: #326690;
+            text-decoration: none;
+        }
+        .github-link a:hover {
+            text-decoration: underline;
+        }
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #326690;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            display: none;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .back-to-top:hover {
+            background-color: #265072;
+        }
+        .restart-btn {
+            background-color: #326690;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .restart-btn:hover {
+            background-color: #265072;
+        }
+        .finished-message {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            display: none;
+        }
+        .finished-message h2 {
+            color: #326690;
+        }
+    </style>
+</head>
+<body>
+    <h1>PostgreSQL EXTRACT Function Quiz</h1>
+    
+    <div class="intro">
+        <p>Test your knowledge of PostgreSQL's <code>EXTRACT</code> function behavior with this quiz. The <code>EXTRACT</code> function retrieves subfields like year, month, etc. from date/time values, but its behavior can sometimes be surprising.</p>
+        <p>Select what you believe is the correct answer for each question. As you answer questions, new ones will appear below. By the end, you'll see all questions with their correct answers and explanations.</p>
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+    </div>
+    <div class="score-display">Score: <span id="score">0</span>/<span id="total">0</span></div>
+
+    <div class="quiz-container" id="quiz-container"></div>
+    
+    <div class="finished-message" id="finished-message">
+        <h2>Quiz Completed!</h2>
+        <p>Your final score: <span id="final-score">0</span>/<span id="final-total">0</span></p>
+        <p>Thank you for taking the PostgreSQL EXTRACT Function Quiz!</p>
+        <p>Scroll up to review all questions and answers.</p>
+        <button class="restart-btn" id="restart-btn">Restart Quiz</button>
+    </div>
+
+    <button class="back-to-top" id="back-to-top" title="Back to Top">↑</button>
+
+    <div class="github-link">
+        <p>Find this project on <a href="https://github.com/yourusername/postgresql-extract-quiz" target="_blank">GitHub</a></p>
+    </div>
+
+    <script>
+        // Quiz data - add your questions here
+        // The FIRST answer in each options array is treated as the correct one
+        // Options will be shuffled when displayed
+        const quizData = [
+            {
+                question: "What is the result of the following query?<pre>SELECT EXTRACT(HOUR FROM TIMESTAMP '2023-01-15 14:30:45');</pre>",
+                options: [
+                    "14", // This is the correct answer (first position)
+                    "2",
+                    "1430",
+                    "Error"
+                ],
+                explanation: "The EXTRACT function with HOUR returns the hour component (14) from the timestamp. The function follows the 24-hour format, so 2:30 PM is represented as 14."
+            }
+            // Add more questions here following the same format
+            // Remember: The first option should always be the correct answer
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let answeredQuestions = 0;
+        const quizContainer = document.getElementById('quiz-container');
+        const scoreDisplay = document.getElementById('score');
+        const totalDisplay = document.getElementById('total');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const finalTotalDisplay = document.getElementById('final-total');
+        const progressBar = document.getElementById('progress');
+        const finishedMessage = document.getElementById('finished-message');
+        const backToTop = document.getElementById('back-to-top');
+
+        // Shuffle array using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        // Initialize the quiz
+        function initQuiz() {
+            scoreDisplay.textContent = score;
+            totalDisplay.textContent = quizData.length;
+            finalScoreDisplay.textContent = score;
+            finalTotalDisplay.textContent = quizData.length;
+            currentQuestion = 0;
+            answeredQuestions = 0;
+            quizContainer.innerHTML = '';
+            showNextQuestion();
+            
+            // Add event listener for back to top button
+            backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+            
+            // Show back to top button when scrolling
+            window.addEventListener('scroll', () => {
+                if (window.pageYOffset > 300) {
+                    backToTop.style.display = 'block';
+                } else {
+                    backToTop.style.display = 'none';
+                }
+            });
+        }
+
+        // Show the next question
+        function showNextQuestion() {
+            if (currentQuestion >= quizData.length) {
+                showFinishedMessage();
+                return;
+            }
+
+            const question = quizData[currentQuestion];
+            
+            // Shuffle options and keep track of correct answer
+            const originalOptions = [...question.options];
+            const correctAnswer = originalOptions[0]; // First option is always correct
+            
+            const shuffledOptions = shuffleArray(originalOptions);
+            const correctAnswerIndex = shuffledOptions.indexOf(correctAnswer);
+            
+            // Update progress bar
+            const progressPercent = (answeredQuestions / quizData.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            // Create question element
+            const questionElement = document.createElement('div');
+            questionElement.className = 'question';
+            questionElement.id = `question-${currentQuestion}`;
+            questionElement.innerHTML = `
+                <h3>Question ${currentQuestion + 1} of ${quizData.length}</h3>
+                <p>${question.question}</p>
+                <ul class="options">
+                    ${shuffledOptions.map((option, index) => `
+                        <li class="option" data-index="${index}" data-correct="${index === correctAnswerIndex}" data-question="${currentQuestion}">${option}</li>
+                    `).join('')}
+                </ul>
+                <div class="feedback" id="feedback-${currentQuestion}"></div>
+            `;
+            
+            quizContainer.appendChild(questionElement);
+
+            // Add event listeners to options
+            const options = questionElement.querySelectorAll('.option');
+            options.forEach(option => {
+                option.addEventListener('click', selectAndCheckOption);
+            });
+            
+            currentQuestion++;
+        }
+
+        // Handle option selection and immediately check answer
+        function selectAndCheckOption() {
+            const questionIndex = parseInt(this.getAttribute('data-question'));
+            const isCorrect = this.getAttribute('data-correct') === 'true';
+            const selectedIndex = parseInt(this.getAttribute('data-index'));
+            const feedback = document.getElementById(`feedback-${questionIndex}`);
+            
+            // Get all options for this question
+            const questionElement = document.getElementById(`question-${questionIndex}`);
+            const options = questionElement.querySelectorAll('.option');
+            
+            // Disable further selections for this question
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+            });
+
+            // Mark selected option
+            this.classList.add('selected');
+            
+            // Mark correct and incorrect options
+            options.forEach(option => {
+                if (option.getAttribute('data-correct') === 'true') {
+                    option.classList.add('correct');
+                } else if (option === this && !isCorrect) {
+                    option.classList.add('incorrect');
+                }
+            });
+
+            // Show feedback
+            const question = quizData[questionIndex];
+            if (isCorrect) {
+                feedback.className = 'feedback correct';
+                feedback.innerHTML = `<strong>Correct!</strong> ${question.explanation}`;
+                score++;
+                scoreDisplay.textContent = score;
+                finalScoreDisplay.textContent = score;
+            } else {
+                feedback.className = 'feedback incorrect';
+                feedback.innerHTML = `<strong>Incorrect.</strong> ${question.explanation}`;
+            }
+            feedback.style.display = 'block';
+            
+            // Increment answered questions and update progress
+            answeredQuestions++;
+            const progressPercent = (answeredQuestions / quizData.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+            
+            // Show next question if available
+            if (currentQuestion < quizData.length) {
+                showNextQuestion();
+            } else if (answeredQuestions === quizData.length) {
+                showFinishedMessage();
+            }
+            
+            // Scroll to next question or finished message
+            setTimeout(() => {
+                if (currentQuestion < quizData.length) {
+                    document.getElementById(`question-${currentQuestion-1}`).scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    finishedMessage.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 500);
+        }
+
+        // Show finished message
+        function showFinishedMessage() {
+            finishedMessage.style.display = 'block';
+            document.getElementById('restart-btn').addEventListener('click', restartQuiz);
+        }
+
+        // Restart the quiz
+        function restartQuiz() {
+            score = 0;
+            finishedMessage.style.display = 'none';
+            initQuiz();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Initialize quiz when page loads
+        document.addEventListener('DOMContentLoaded', initQuiz);
+    </script>
+</body>
+</html>
