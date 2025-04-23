@@ -176,11 +176,35 @@
     </style>
 </head>
 <body>
-    <h1>PostgreSQL EXTRACT Function Quiz</h1>
+    <h1>SQL EXTRACT Quiz</h1>
     
     <div class="intro">
-        <p>Test your knowledge of PostgreSQL's <code>EXTRACT</code> function behavior with this quiz. The <code>EXTRACT</code> function retrieves subfields like year, month, etc. from date/time values, but its behavior can sometimes be surprising.</p>
-        <p>Select what you believe is the correct answer for each question. As you answer questions, new ones will appear below. By the end, you'll see all questions with their correct answers and explanations.</p>
+        <p>Extracting fields from intervals in SQL can have some pretty surprising results.</p>
+        <p>For each question, figure out what the expression evaluates to in <strong>PostgreSQL</strong>.</p>
+        <p>Here are some boring basics:
+<pre>
+postgres=# select extract(year from x) = 2023
+   and extract(month from x) = 11
+   and extract(day from x) = 29
+   and extract(hour from x) = 18
+   and extract(minute from x) = 40
+   and extract(second from x) = 53
+from (values (timestamp '2023-11-29T18:40:53')) x(x);
+
+ ?column?
+----------
+ t
+(1 row)
+
+postgres=# select interval '1 year 2 months 3 days 4 hours 5 minutes 6 seconds 7 milliseconds 8 microseconds';
+               interval
+--------------------------------------
+ 1 year 2 mons 3 days 04:05:06.007008
+(1 row)
+
+postgres=#
+</pre>
+        </p>
     </div>
 
     <div class="progress-bar">
@@ -201,26 +225,80 @@
     <button class="back-to-top" id="back-to-top" title="Back to Top">↑</button>
 
     <div class="github-link">
-        <p>Find this project on <a href="https://github.com/yourusername/postgresql-extract-quiz" target="_blank">GitHub</a></p>
+        <p>Find this project on <a href="https://github.com/main--/sql-extract-quiz" target="_blank">GitHub</a></p>
     </div>
 
     <script>
         // Quiz data - add your questions here
         // The FIRST answer in each options array is treated as the correct one
         // Options will be shuffled when displayed
+        const userTzOffset = new Date('2023-11-29T18:40:53.123456').getTimezoneOffset() * -60;
         const quizData = [
             {
-                question: "What is the result of the following query?<pre>SELECT EXTRACT(HOUR FROM TIMESTAMP '2023-01-15 14:30:45');</pre>",
+                question: "EXTRACT(YEAR FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
                 options: [
-                    "14", // This is the correct answer (first position)
-                    "2",
-                    "1430",
+                    "2023",
+                    "2022",
+                    "23",
                     "Error"
                 ],
-                explanation: "The EXTRACT function with HOUR returns the hour component (14) from the timestamp. The function follows the 24-hour format, so 2:30 PM is represented as 14."
-            }
-            // Add more questions here following the same format
-            // Remember: The first option should always be the correct answer
+                explanation: "So far, so obvious."
+            },
+            {
+                question: "EXTRACT(EPOCH FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
+                options: ["1701283253.123456", "1701283253", "Error", "42"],
+                explanation: "Extracting EPOCH gives the unix timestamp in seconds, including fractional seconds."
+            },
+            {
+                question: "EXTRACT(SECOND FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
+                options: ["53.123456", "53", "1701283253", "1701283253.123456"],
+                explanation: "Here is the first surprise: everything from years up to and including minutes is rounded to whole numbers, but the seconds field includes sub-seconds behind the decimal point."
+            },
+            {
+                question: "EXTRACT(MILLISECOND FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
+                options: ["53123.456", "123", "123.456", "1701283253123"],
+                explanation: "At this step we add the second inconsistency: milliseconds include the seconds, but nothing else."
+            },
+            {
+                question: "EXTRACT(MICROSECOND FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
+                options: ["53123456", "456", "123456", "0.000456"],
+                explanation: "Microseconds include both milliseconds and seconds."
+            },
+            {
+                question: "EXTRACT(TIMEZONE FROM TIMESTAMP '2023-11-29T18:40:53.123456')",
+                options: ["Error", userTzOffset, "-17940"],
+                explanation: "A <code>TIMESTAMP</code> does not carry any timezone information, so there is nothing to extract."
+            },
+            {
+                question: "EXTRACT(TIMEZONE FROM TIMESTAMP WITH TIME ZONE '2023-11-29T18:40:53.123456-04:59')",
+                options: [userTzOffset, "Error", "-17940"],
+                explanation: "Trick question. Contrary to what the name of the <code>TIMESTAMP WITH TIME ZONE</code> (aka <code>TIMESTAMPTZ</code>) type suggests, it does not actually contain any timezone information. The extracted timezone offset is always determined by the session timezone, which defaults to your local time."
+            },
+            {
+                question: "EXTRACT(TIMEZONE FROM TIMESTAMP WITH TIME ZONE '2023-11-29T18:40:53.123456-04:59' AT TIME ZONE 'Pacific/Kiritimati')",
+                options: ["Error", userTzOffset, "50400"],
+                explanation: "The <code>AT TIME ZONE</code> operator converts the given instant to the target timezone. If it were to return a <code>TIMESTAMPTZ</code>, the timestamp would immediately be converted back to local time, so it must return a <code>TIMESTAMP</code>, which you can't extract a timezone from."
+            },
+            {
+                question: "INTERVAL '13 months 1 week 35 days 26 hours 77 minutes'",
+                options: ["1 year 1 mon 42 days 27:17:00", "Error", "13 months 1 week 35 days 26 hours 77 minutes", "1 year 2 mons 13 days 03:17:00"],
+                explanation: "Intervals are internally represented as hours, days, and months. This leads to the weird behavior where months are converted into years, days into weeks, and minutes into hours, but nothing else. Postgres provides a <code>justify_interval</code> function to remedy this, which outputs <code>1 year 2 mons 13 days 03:17:00</code> based on the assumption that every day has 24 hours and (quite surprisingly) that every month has 30 days."
+            },
+            {
+                question: "EXTRACT(MONTHS FROM TIMESTAMP '2023-11-01' - TIMESTAMP '2017-01-01')",
+                options: ["0", "10", "11", "82"],
+                explanation: "Surprisingly, timestamp subtraction returns an interval where the months (and hence the years as well) are always zero. In this case the subtraction evaluates to <code>1156 days</code>."
+            },
+            {
+                question: "EXTRACT(MONTHS FROM justify_interval(TIMESTAMP '2023-11-01' - TIMESTAMP '2017-01-01'))",
+                options: ["11", "0", "10", "82"],
+                explanation: "Attempting to work around this using <code>justify_interval</code> unfortunately does not give the difference in months either (due to it assuming 30-day months)."
+            },
+            {
+                question: "EXTRACT(MONTHS FROM age(TIMESTAMP '2023-11-01', TIMESTAMP '2017-01-01'))",
+                options: ["10", "0", "11", "82"],
+                explanation: "The best solution is to use the <code>age</code> function instead of the subtraction operator in this case."
+            },
         ];
 
         let currentQuestion = 0;
@@ -297,7 +375,7 @@
             questionElement.id = `question-${currentQuestion}`;
             questionElement.innerHTML = `
                 <h3>Question ${currentQuestion + 1} of ${quizData.length}</h3>
-                <p>${question.question}</p>
+                <p><pre>${question.question}</pre></p>
                 <ul class="options">
                     ${shuffledOptions.map((option, index) => `
                         <li class="option" data-index="${index}" data-correct="${index === correctAnswerIndex}" data-question="${currentQuestion}">${option}</li>
